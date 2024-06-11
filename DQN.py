@@ -16,9 +16,9 @@ device = torch.device("cuda")
 
 learning_rate = 0.001
 input_size = 4  # Player_value, Dealer_showing_value, Player_usable_ace, dealer_usable_ace
-hidden_size = 4
+hidden_size = 32
 output_size = 2  # 0:Hit 1:Stay
-episodes = 5000
+episodes = 10_000
 eval_episodes = 10000
 batch_size = 64
 
