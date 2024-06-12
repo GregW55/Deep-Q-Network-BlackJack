@@ -18,7 +18,7 @@ learning_rate = 0.001
 input_size = 4  # Player_value, Dealer_showing_value, Player_usable_ace, dealer_usable_ace
 hidden_size = 4
 output_size = 2  # 0:Hit 1:Stay
-episodes = 10_000
+episodes = 1000
 eval_episodes = 10000
 batch_size = 64
 
@@ -241,31 +241,31 @@ class BlackJackTrainer:
 
         # Reward based on player hand value
         if 21 >= player_value >= 20:
-            reward += 0.75
+            reward += 3
         elif 19 >= player_value >= 17:
-            reward += 0.5
+            reward += 2
         elif 16 >= player_value >= 14:
-            reward += 0.25
+            reward += 0.5
         elif 10 >= player_value:
-            reward -= 0.75
+            reward -= 1.5
         elif player_value == 11:
-            reward -= 1
-        if 11 >= player_value and game.player_aces[0] != 0:
             reward -= 2
+        if 11 >= player_value and game.player_aces[0] != 0:
+            reward -= 3
 
         if game_action == "stay":
             if 12 > player_value:
-                reward -= 0.5
+                reward -= 2
             if 11 == player_value:
-                reward -= 1
+                reward -= 2.5
             if 10 >= player_value:
-                reward -= 1
+                reward -= 2.5
             elif player_value == 21:
                 reward += 2
             elif 20 >= player_value >= 19:
-                reward += 1
+                reward += 2
             elif 18 >= player_value >= 17:
-                reward += 0.5
+                reward += 1
 
         # Handle Hit rewards
         if game_action == "hit":
@@ -385,21 +385,22 @@ def create_grids(agent, usable_ace=False):
 
     for player_value in range(12, 22):
         for dealer_value in range(1, 11):
-            for player_usable_ace in [0, 1]:
-                for dealer_usable_ace in [0, 1]:
-                    player_value_norm = player_value
-                    dealer_value_norm = dealer_value
+            player_usable_ace = 1 if usable_ace else 0
+            dealer_usable_ace = 1 if usable_ace else 0
 
-                    state_tensor = torch.tensor(
-                        [[player_value_norm, dealer_value_norm, player_usable_ace, dealer_usable_ace]]
-                    ).to(device)
+            player_value_norm = player_value
+            dealer_value_norm = dealer_value
 
-                    with torch.no_grad():
-                        q_values = agent.model(state_tensor).cpu().numpy().flatten()
+            state_tensor = torch.tensor(
+                [[player_value_norm, dealer_value_norm, player_usable_ace, dealer_usable_ace]]
+            ).to(device)
 
-                    obs = (player_value, dealer_value, player_usable_ace)
-                    state_value[obs] = float(np.max(q_values))
-                    policy[obs] = int(np.argmax(q_values))
+            with torch.no_grad():
+                q_values = agent.model(state_tensor).cpu().numpy().flatten()
+
+            obs = (player_value, dealer_value, player_usable_ace)
+            state_value[obs] = float(np.max(q_values))
+            policy[obs] = int(np.argmax(q_values))
 
     player_count, dealer_count = np.meshgrid(
         np.arange(12, 22),
@@ -407,7 +408,7 @@ def create_grids(agent, usable_ace=False):
     )
 
     value = np.apply_along_axis(
-        lambda obs: state_value[(obs[0], obs[1], 0 if usable_ace else 1)],
+        lambda obs: state_value[(obs[0], obs[1], player_usable_ace)],
         axis=2,
         arr=np.dstack([player_count, dealer_count]),
     )
@@ -415,13 +416,12 @@ def create_grids(agent, usable_ace=False):
     value_grid = player_count, dealer_count, value
 
     policy_grid = np.apply_along_axis(
-        lambda obs: policy[(obs[0], obs[1], 0 if usable_ace else 1)],
+        lambda obs: policy[(obs[0], obs[1], player_usable_ace)],
         axis=2,
         arr=np.dstack([player_count, dealer_count]),
     )
 
     return value_grid, policy_grid
-
 
 # noinspection PyTypeChecker
 def create_plots(value_grid, policy_grid, title: str):
