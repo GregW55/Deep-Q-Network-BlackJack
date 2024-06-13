@@ -26,15 +26,13 @@ Blackjack Game (custom module)
 
 Clone the repository:
 
-bash
 
-git clone https://github.com/your-repo/blackjack-dqn.git
+git clone https://github.com/GregW55/Deep-Q-Network-BlackJack.git
 
-cd blackjack-dqn
+cd Deep-Q-Network-BlackJack
 
 Install the required Python packages:
 
-bash
 
 pip install torch numpy matplotlib seaborn
 
@@ -42,7 +40,6 @@ pip install torch numpy matplotlib seaborn
 
 Run the main script to start training the DQN agent:
 
-bash
 
 python DQN.py
 
